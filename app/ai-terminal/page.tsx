@@ -39,6 +39,8 @@ export default function AITerminalPage() {
     {}
   );
 
+  const isAdmin = session?.user?.isAdmin ?? false;
+
   useEffect(() => {
     if (status === "unauthenticated") router.push("/");
   }, [status, router]);
@@ -65,7 +67,7 @@ export default function AITerminalPage() {
       toast.error("Enter a prompt first");
       return;
     }
-    if (credits < 2000) {
+    if (!isAdmin && credits < 2000) {
       setShowBuyModal(true);
       return;
     }
@@ -199,6 +201,7 @@ export default function AITerminalPage() {
             <ChatStream
               currentCredits={credits}
               onCreditsUpdate={setCredits}
+              isAdmin={isAdmin}
             />
           )}
 
@@ -212,6 +215,7 @@ export default function AITerminalPage() {
                 }
                 currentCredits={credits}
                 onCreditsUpdate={setCredits}
+                isAdmin={isAdmin}
               />
             </div>
           )}

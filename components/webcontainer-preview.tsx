@@ -19,12 +19,14 @@ interface WebContainerPreviewProps {
   files?: Record<string, string>;
   currentCredits: number;
   onCreditsUpdate?: (credits: number) => void;
+  isAdmin?: boolean;
 }
 
 export function WebContainerPreview({
   files,
   currentCredits,
   onCreditsUpdate,
+  isAdmin = false,
 }: WebContainerPreviewProps) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [status, setStatus] = useState<
@@ -50,18 +52,20 @@ export function WebContainerPreview({
     const data = await res.json();
 
     if (!res.ok) {
-      toast.error("Out of credits — WebContainer paused");
-      setShowBuyModal(true);
+      if (!isAdmin) {
+        toast.error("Out of credits — WebContainer paused");
+        setShowBuyModal(true);
+      }
       return false;
     }
 
     onCreditsUpdate?.(data.remaining);
     setElapsedMinutes((prev) => prev + 1);
     return true;
-  }, [onCreditsUpdate]);
+  }, [onCreditsUpdate, isAdmin]);
 
   const startPreview = async () => {
-    if (currentCredits < 50) {
+    if (!isAdmin && currentCredits < 50) {
       setShowBuyModal(true);
       return;
     }

@@ -14,6 +14,7 @@ import { motion, AnimatePresence } from "framer-motion";
 interface ChatStreamProps {
   currentCredits: number;
   onCreditsUpdate: (credits: number) => void;
+  isAdmin?: boolean;
 }
 
 function CopyButton({ text }: { text: string }) {
@@ -67,7 +68,7 @@ function MessageContent({ content }: { content: string }) {
   );
 }
 
-export function ChatStream({ currentCredits, onCreditsUpdate }: ChatStreamProps) {
+export function ChatStream({ currentCredits, onCreditsUpdate, isAdmin = false }: ChatStreamProps) {
   const [showBuyModal, setShowBuyModal] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -80,7 +81,7 @@ export function ChatStream({ currentCredits, onCreditsUpdate }: ChatStreamProps)
       },
       onError(err) {
         if (err.message.includes("NO_CREDITS") || err.message.includes("402")) {
-          setShowBuyModal(true);
+          if (!isAdmin) setShowBuyModal(true);
         } else {
           toast.error(err.message || "Failed to get AI response");
         }
@@ -96,7 +97,7 @@ export function ChatStream({ currentCredits, onCreditsUpdate }: ChatStreamProps)
   const onSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim()) return;
-    if (currentCredits < 50) {
+    if (!isAdmin && currentCredits < 50) {
       setShowBuyModal(true);
       return;
     }
