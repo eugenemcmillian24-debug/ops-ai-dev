@@ -1,6 +1,16 @@
 import { db, users, usageLogs } from "@/lib/db";
 import { eq, sql } from "drizzle-orm";
 
+export async function isAdmin(userId: number): Promise<boolean> {
+  const result = await db
+    .select({ isAdmin: users.isAdmin })
+    .from(users)
+    .where(eq(users.id, userId))
+    .limit(1);
+
+  return result[0]?.isAdmin ?? false;
+}
+
 export const ACTION_COSTS = {
   terminalMessage: 50,
   agentRun: 2000,
@@ -43,6 +53,19 @@ export async function deductCredits(
   action: ActionType,
   metadata?: Record<string, unknown>
 ): Promise<{ success: boolean; remaining: number }> {
+  const admin = await isAdmin(userId);
+
+  if (admin) {
+    const currentCredits = await getUserCredits(userId);
+    await db.insert(usageLogs).values({
+      userId,
+      action,
+      creditsUsed: 0,
+      metadata: { ...metadata, isAdmin: true, waived: true },
+    });
+    return { success: true, remaining: currentCredits };
+  }
+
   const result = await db
     .update(users)
     .set({
@@ -90,6 +113,9 @@ export async function checkCredits(
   userId: number,
   required: number
 ): Promise<boolean> {
+  const admin = await isAdmin(userId);
+  if (admin) return true;
+
   const current = await getUserCredits(userId);
   return current >= required;
 }

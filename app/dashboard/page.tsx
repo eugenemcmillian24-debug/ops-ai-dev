@@ -45,6 +45,7 @@ export default async function DashboardPage({
   const params = await searchParams;
   const userId = parseInt(session.user.id);
   const credits = await getUserCredits(userId);
+  const isAdmin = session.user.isAdmin ?? false;
 
   const recentLogs = await db
     .select()
@@ -81,7 +82,7 @@ export default async function DashboardPage({
         </div>
 
         <div className="flex items-center gap-4">
-          <CreditWallet initialCredits={credits} compact />
+          <CreditWallet initialCredits={credits} compact isAdmin={isAdmin} />
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -137,7 +138,7 @@ export default async function DashboardPage({
           </div>
         )}
 
-        {credits === 0 && (
+        {!isAdmin && credits === 0 && (
           <div className="mb-6 p-4 rounded-xl bg-red-500/10 border border-red-500/30">
             <div className="flex items-center justify-between">
               <div>
@@ -285,8 +286,8 @@ export default async function DashboardPage({
           </div>
 
           <div className="space-y-4">
-            <CreditWallet initialCredits={credits} />
-            <UsageForecast currentCredits={credits} />
+            <CreditWallet initialCredits={credits} isAdmin={isAdmin} />
+            {!isAdmin && <UsageForecast currentCredits={credits} />}
           </div>
         </div>
       </main>

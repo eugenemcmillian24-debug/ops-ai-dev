@@ -22,13 +22,26 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         .limit(1);
 
       if (existing.length === 0) {
+        const adminGithubIds = process.env.ADMIN_GITHUB_IDS?.split(",").map(id => id.trim()) || [];
+        const isAdmin = adminGithubIds.includes(githubId);
+
         await db.insert(users).values({
           githubId,
           email: user.email ?? null,
           name: user.name ?? null,
           image: user.image ?? null,
           credits: 0,
+          isAdmin,
         });
+      } else {
+        const adminGithubIds = process.env.ADMIN_GITHUB_IDS?.split(",").map(id => id.trim()) || [];
+        const shouldBeAdmin = adminGithubIds.includes(githubId);
+
+        if (existing[0].isAdmin !== shouldBeAdmin) {
+          await db.update(users)
+            .set({ isAdmin: shouldBeAdmin })
+            .where(eq(users.githubId, githubId));
+        }
       }
 
       return true;
@@ -45,6 +58,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           session.user.id = String(dbUser[0].id);
           session.user.credits = dbUser[0].credits;
           session.user.githubId = dbUser[0].githubId;
+          session.user.isAdmin = dbUser[0].isAdmin;
         }
       }
       return session;
@@ -70,6 +84,7 @@ declare module "next-auth" {
       image?: string | null;
       credits: number;
       githubId: string;
+      isAdmin: boolean;
     };
   }
 }

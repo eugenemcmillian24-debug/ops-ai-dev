@@ -7,6 +7,7 @@ import {
   integer,
   timestamp,
   jsonb,
+  boolean,
 } from "drizzle-orm/pg-core";
 
 const sql = neon(process.env.DATABASE_URL!);
@@ -19,6 +20,7 @@ export const users = pgTable("users", {
   name: text("name"),
   image: text("image"),
   credits: integer("credits").default(0).notNull(),
+  isAdmin: boolean("is_admin").default(false).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
